@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+  <title>Пример добавления интерактивных элементов в формулы MathJax</title>
+  <meta name="author" content="Вильданов Алмаз">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<style>
+	p, .formul{ 
+		font-size: 20px;
+	}
+	.formul{ 
+		font-family: Consolas,monaco,monospace; 
+	}
+</style>
+</head>
+
+<body>
+<h3>Пример добавления интерактивных элементов в формулы MathJax</h3>	
+<div style="height: 130px;">  
+	<p>Представьте в виде дроби:</p>
+		<p class="formul" id="formula"> 
+			\[
+				\frac{2}{3} - \frac{5}{12} =
+					\frac{\cssId{num}{\class{dynamic}{?}}}
+						{\cssId{den}{\class{dynamic}{?}}}
+			\]
+		</p>
+</div>
+<p>Числитель равен <span id="new_num">?</span></p>
+<p>Знаменатель равен <span id="new_den">?</span></p>
+<input type="button" value="Проверить ответ" onclick="check()">
+<p id="result"></p>
+</body>
+</html>
+
+
+<script>
+
+window.MathJax = {
+  loader: {load: ['input/asciimath']},
+  startup: {
+    pageReady: function () {
+		return MathJax.startup.defaultPageReady().then(
+			function () {
+					addEvents();
+			   });
+    }
+  },
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    processEscapes: true
+  }
+};
+
+	var p_formula = document.getElementById("formula");
+
+	// Создаем инпут-бродягу
+	var trampInput = document.createElement("input");
+	var trampactive = false; // инпут активен в данное время
+	trampInput.type = "text";
+	trampInput.setAttribute("size", 1);
+	trampInput.style.fontSize = "20px";
+	trampInput.style.color = "black";
+	trampInput.style.fontFamily = "MJXc-TeX-main-R";
+	trampInput.style.width = "25px";
+	trampInput.addEventListener("blur", function() {
+		let str = trampInput.value.replace("-","−");
+		if ( str.length < 1 ) { str = "&nbsp;?&nbsp;"; }
+		trampInput.parentNode.innerHTML = str;
+		trampactive = false;
+		document.getElementById("new_num").innerHTML = document.getElementById("num").innerHTML.trim();
+		document.getElementById("new_den").innerHTML = document.getElementById("den").innerHTML.trim();
+		//MathJax.texReset();
+		//MathJax.typesetClear();
+		//MathJax.typesetPromise([p_formula]);
+		}, false);
+	trampInput.onkeydown = function() {
+		let key = event.keyCode || event.charCode;
+		if( key == 8 && trampInput.value.length == 0 )
+			return false;
+		};
+
+function check() {
+	let p = parseInt( document.getElementById("num").innerHTML );
+	let q = parseInt( document.getElementById("den").innerHTML );
+	let eps = 0.001;
+	if ( Math.abs(p/q-1/4)<eps ) { 
+			if ( Math.abs(p-1)<eps ) { document.getElementById("result").innerHTML = "Правильно!"; }
+				else { document.getElementById("result").innerHTML = "Сократите дробь!"; }
+		}
+		else document.getElementById("result").innerHTML = "Ответ неверен.";
+}
+
+function addEvents() {
+	var elems = document.getElementsByClassName("dynamic");
+	for (var i=0; i<elems.length; i++) {
+		var el = elems[i];
+		el.addEventListener('mouseover', function() { 
+				this.style.cursor = 'pointer';
+				this.style.backgroundColor = "#FFFFFF";
+			}, false);
+		el.addEventListener('mouseout', function() { 
+				this.style.cursor = 'auto';
+				this.style.backgroundColor = "#FFFFFF";
+			}, false);		
+	}
+	for (var i=0; i<elems.length; i++) {
+		var el = elems[i];
+		el.addEventListener("click", function() {
+			if (trampactive) return;
+			trampactive = true;
+			trampInput.value = this.innerText;
+			console.log( trampInput.style.width );
+			this.innerHTML = "";
+			this.appendChild(trampInput);
+			trampInput.focus();
+			trampInput.select()
+		}.bind(el), false);
+	};
+}
+
+
+//
+//  Load MathJax
+//
+var script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+script.setAttribute('id', 'MathJax-script');
+document.head.appendChild(script);
+
+</script>
